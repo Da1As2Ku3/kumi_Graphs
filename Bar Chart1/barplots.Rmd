@@ -1,0 +1,728 @@
+---
+title: "Bar Graph"
+author: "David Asare Kumi"
+date: "3/30/2020"
+output: html_document
+---
+
+
+## Bar plot
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(datasets)
+library(dplyr)
+data(mtcars)
+head(mtcars)
+glimpse(mtcars)
+#select mpg and cylinder
+mt_sel<-select(mtcars,mpg:cyl)
+head(mt_sel)
+#convert cyl to a factor variable
+cyl<-as.factor(mtcars$cyl)
+class(cyl)
+levels(cyl)
+#sum using tapply
+mt_sum<-tapply(mtcars$mpg,mtcars$cyl,sum)
+mt_sum
+#plot the graph
+mt_plot<-barplot(mt_sum,xlab="Cylinder",ylab="Total MPG",names.arg=c("Four","Six","Eight"),
+ylim=c(0,350),col=c("red","green","yellow"),main="Barplot of Cylinder and corresponding MPG Total",las=1)
+#add data labels
+text(mt_plot,mt_sum,label=mt_sum,pos=3)
+#add legend
+legend("topright",legend=c("Four","Six","Eight"),fill=c("red","green","yellow"),bty="n",pch=20,
+       cex=1)
+
+```
+
+## Barplot using Frequency or Count
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(datasets)
+data(mtcars)
+#create table using the factor variable
+cyl<-as.factor(mtcars$cyl)
+mt_count<-table(mtcars$cyl)
+mt_count
+#barplot
+mt_plot<-barplot(mt_count,xlab="Cylinder",ylab="Frequency",las=1,col=c("maroon","pink","blue"), main="Barplot of Cylinder",ylim=c(0,20),names.arg=c("Four","Six","Eight"))
+#add data labels
+text(mt_plot,mt_count,label=mt_count,pos=3)
+#add legend
+legend("top",legend=c("Four","Six","Eight"),fill=c("maroon","pink","blue"),bty="n",pch=20,
+       cex=1.2,horiz=TRUE)
+
+```
+
+## Barplot-Relative Frequency(%)
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(datasets)
+data(mtcars)
+#create table using the factor variable
+cyl<-as.factor(mtcars$cyl)
+percent<-table(mtcars$cyl)/32
+mt_plot<-barplot(percent,xlab="Cylinder",ylab="Relative Freq.",col=c("purple","orange","red"),
+main="Relative Frequency Barplot",names.arg=c("Four","Six","Eight"),las=1,ylim=c(0,0.5))
+#add data labels
+text(mt_plot,percent,label=percent,pos=3)
+
+```
+
+## Barplot-Percentage(%)
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(datasets)
+data(mtcars)
+#create table using the factor variable
+cyl<-as.factor(mtcars$cyl)
+percent<-table(mtcars$cyl)/32
+mt_plot<-barplot(percent,xlab="Cylinder",ylab="Percent(%)",col=c("purple","orange","red"),
+main="Percentage Barplot",names.arg=c("Four","Six","Eight"),las=1,ylim=c(0,0.5))
+#add data labels
+text(mt_plot,percent,label=c("34%","22%","44%"),pos=3)
+
+```
+
+## ggplot2 graphics
+
+### Basic Bar Chart
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(ggplot2)
+library(gridExtra)
+library(plotly)
+library(datasets)
+data(mtcars)
+head(mtcars)
+
+p1<-ggplot(mtcars,aes(x=cyl,fill=cyl))+geom_bar()+ggtitle("Fig.A:x-axis as a continuous variable")
+ggplotly(p1)
+
+p2<-ggplot(mtcars,aes(x=factor(cyl),fill=factor(cyl)))+geom_bar()+ggtitle("Fig.B:x-axis as a categorical(factor) variable")
+ggplotly(p2)
+
+grid.arrange(p1,p2,ncol=2)
+
+```
+
+- An alternative use of a bar chart is to plot a second variable on the y-axis to compare the x-axis categories across. For instance, we may want to assess the average mpg that 4, 6, and 8 cylinder cars get. We include the argument stat = "identity" in geom_bar() which tells R to use the y values for the height of the bars.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(dplyr)
+
+cyl_mpg <- mtcars %>%
+        group_by(cyl) %>%
+        summarise(avg_mpg = mean(mpg, na.rm = TRUE))
+
+g<-ggplot(cyl_mpg, aes(x = factor(cyl), y = avg_mpg,fill=factor(cyl))) +
+        geom_bar(stat = "identity")
+ggplotly(g)
+
+```
+
+- Although the default width of the bars is aesthetically pleasing, you do have the ability to adjust this attribute by setting the width in geom_bar(). The default width is 0.9; smaller values make the bars narrower and larger values (max width of 1) make the bars wider.
+
+## Adjust width of bars
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+p1 <- ggplot(mtcars, aes(x = factor(cyl),fill=factor(cyl))) +
+        geom_bar(width = .5) +
+        ggtitle("bar width = 0.5")
+        
+
+p2 <- ggplot(mtcars, aes(x = factor(cyl),fill=factor(cyl))) +
+        geom_bar(width = .75) +
+        ggtitle("bar width = 0.75")
+
+p3 <- ggplot(mtcars, aes(x = factor(cyl),fill=factor(cyl))) +
+        geom_bar(width = .9) +
+        ggtitle("bar width = 0.9")
+
+p4 <- ggplot(mtcars, aes(x = factor(cyl),fill=factor(cyl))) +
+        geom_bar(width = .99) +
+        ggtitle("bar width = 0.99")
+
+grid.arrange(p1, p2, p3, p4, ncol = 2,nrow=2)
+
+```
+
+- We can also adjust the fill and outline colors of the bars along with the opacity by applying fill, color, and alpha arguments respectively in the geom_bar() function.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+g<-ggplot(mtcars, aes(x = factor(cyl))) +
+        geom_bar(fill = "royalblue", color = "red", alpha = .8)
+ggplotly(g)
+
+```
+
+- There are also times when we want to plot many categories along the x-axis and the length of the names make it difficult to read. One approach to resolving this issue is to use axis.text.x argument within the theme() function to rotate the text.
+
+## Rotate text along the x-axis using theme()
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+p1 <- ggplot(mtcars, aes(x = row.names(mtcars), y = mpg)) +
+        geom_bar(stat = "identity") +
+        ggtitle("Fig. A: Default x-axis")
+
+p2 <- ggplot(mtcars, aes(x = row.names(mtcars), y = mpg)) +
+        geom_bar(stat = "identity") +
+        theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5)) +
+        ggtitle("Fig. B: Rotated x-axis")
+
+grid.arrange(p1, p2, ncol = 1)
+
+```
+
+## Apply coord_flip() to rotate the axes
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+# rotate to make more readable
+p1 <- ggplot(mtcars, aes(x = row.names(mtcars), mpg)) +
+        geom_bar(stat = "identity") +
+        coord_flip() +
+        ggtitle("Fig. A: Default rotated x-axis")
+
+# order bars
+p2 <- ggplot(mtcars, aes(x = reorder(row.names(mtcars), mpg), y = mpg)) +
+        geom_bar(stat = "identity") +
+        coord_flip() +
+        ggtitle("Fig. B: Rotated ordered x-axis")
+
+grid.arrange(p1, p2, ncol = 2)
+
+```
+
+## Comparing Groups
+
+- Sometimes we want to compare different groups across the categorical variables of interest. This is primarily done via color, side-by-side bars, or stacked bars. To add a color dimension we simply add a fill argument to our first line of code to tell R what variable we want to use to color our bars. In this example we compare mpg across all the vehicles but also color the vehicles based on number of cylinders. R will use default color codings but you can set the colors manually using scale_fill_manual as in Fig. B; you can also use scale_fill_hue to change the hue across vehicles, scale_fill_brewer to color with preset color schemes (see more about ColorBrewer at http://colorbrewer2.org), etc. There are many coloring options and if you type scale_fill into your RStudio help search field you will see all the possibilities.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+# compare mpg across all cars and color based on cyl
+p1 <- ggplot(mtcars, aes(x = reorder(row.names(mtcars), mpg), y = mpg, fill = factor(cyl))) +
+        geom_bar(stat = "identity") +
+        coord_flip() +
+        theme_minimal() +
+        ggtitle("Fig. A: Default fill colors")
+
+p2 <- ggplot(mtcars, aes(x = reorder(row.names(mtcars), mpg), y = mpg, fill = factor(cyl))) +
+        scale_fill_manual(values = c("#e5f5e0", "#a1d99b", "#31a354")) +
+        geom_bar(stat = "identity") +
+        coord_flip() +
+        theme_minimal() +
+        ggtitle("Fig. B: Manually set fill colors")
+
+grid.arrange(p1, p2, ncol = 2)
+
+```
+
+- We can also use side-by-side bars to make comparisons. Say we want to compare the average mpg for cars across the different 4, 6, and 8 cylinder categories but also assess the impact that transmission (variable am where 0 = automatic, 1 = manual) has. In this case we want to first summarize our data by calculating mean mpg by cylinder and transmission and then we apply the fill argument to color bars based on transmission type then include the position = "dodge" in the geom_bar() function. This tells R to have two bars for each cylinder type, color fill each bar based on the type of transmission and then adjust (aka “dodge”) the position of the bars so that they are side-by-side.
+
+## Group Bar Graph
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(dplyr)
+avg_mpg <- mtcars %>%
+        group_by(cyl, am) %>%
+        summarise(mpg = mean(mpg, na.rm = TRUE))
+
+avg_mpg
+
+
+p1 <- ggplot(avg_mpg, aes(factor(cyl), mpg, fill = factor(am))) +
+        geom_bar(stat = "identity", position = "dodge") +
+        ggtitle("Default color comparison")
+
+# more pleasing colors
+p2 <- ggplot(avg_mpg, aes(factor(cyl), mpg, fill = factor(am))) +
+        geom_bar(stat = "identity", position = "dodge", color = "grey40") +
+        scale_fill_brewer(palette = "Pastel1") +
+        ggtitle("Adjusted color comparison")
+
+grid.arrange(p1, p2, ncol = 2)
+
+```
+
+- You can adjust the dodge width by incorporating the position = position_dodge(width = x) argument in the geom_bar() function. By default, the width is .90 and a lower value will create overlap of your side-by-side bars and a larger value will create spacing between the bars.
+
+## Adjust the dodge width in geom_bar()
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+p1 <- ggplot(avg_mpg, aes(factor(cyl), mpg, fill = factor(am))) +
+        geom_bar(stat = "identity", position = "dodge") +
+        ggtitle("Default dodge positioning") +
+        theme(legend.position = "none")
+
+p2 <- ggplot(avg_mpg, aes(factor(cyl), mpg, fill = factor(am))) +
+        geom_bar(stat = "identity", position = position_dodge(width = .5)) +
+        ggtitle("Overlap of side-by-side bars") +
+        theme(legend.position = "none")
+
+p3 <- ggplot(avg_mpg, aes(factor(cyl), mpg, fill = factor(am))) +
+        geom_bar(stat = "identity", position = position_dodge(width = 1)) +
+        ggtitle("Spacing between side-by-side bars") +
+        labs(fill = "AM") +
+        theme(legend.position = c(1,1), legend.justification = c(1,1),
+              legend.background = element_blank())
+
+grid.arrange(p1, p2, p3, ncol = 3)
+
+```
+
+- Stacked bars are the third common approach to compare groups with bar charts. By default, when you introduce a variable to color fill with in the first line, if you enter no other arguments ggplot will produce a stacked bar chart.
+
+## Stacked Bar Graph
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+g<-ggplot(avg_mpg, aes(factor(cyl), mpg, fill = factor(am))) +
+        geom_bar(stat = "identity")
+ggplotly(g)
+
+```
+
+- Unfortunately, the way ggplot color codes the bars is opposite to how the colors are displayed in the legend. We can resolve this two different ways; either reverse the legend with the arguments displayed in the guides() function in Fig A. or specify the direction of the levels when transforming the transmission (am) variable into a factor as displayed in the first line of code in Fig B. Both will align the legend color coding layout to the color coding of the stacked bars but each option also helps determine which color is top versus on the bottom.
+
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+# Reverse legend color coding layout
+p1 <- ggplot(avg_mpg, aes(factor(cyl), mpg, fill = factor(am))) +
+        geom_bar(stat = "identity") +
+        guides(fill = guide_legend(reverse = TRUE)) +
+        labs(fill = "am") +
+        ggtitle("Fig A: Reverse legend")
+
+# or reverse stacking order by changing the factor levels
+p2 <- ggplot(avg_mpg, aes(factor(cyl), mpg, fill = factor(am, levels = c(1, 0)))) +
+        geom_bar(stat = "identity") +
+        labs(fill = "am") +
+        ggtitle("Fig B: Specify levels")
+
+grid.arrange(p1, p2, ncol = 2)
+
+```
+
+- And as before we can change the color of our stacked bars by incorporating one of the many scale_fill_xxxx arguments. Here I manually specify the colors to apply with scale_fill_manual().
+
+## Change the color of stacked bars
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+g<-ggplot(avg_mpg, aes(factor(cyl), mpg, fill = factor(am, levels = c(1, 0)))) +
+        geom_bar(stat = "identity", color = "grey40") +
+        scale_fill_manual(values = c("#a1d99b", "#31a354")) +
+        labs(fill = "AM")
+ggplotly(g)
+
+```
+
+- A common version of the stacked bar chart that you will see is the proportional stacked bar chart. In the proportional stacked bar chart each x-axis category will have stacked bars that combine to equal 100%. This allows you to see what percentage of that x-axis category is determined by an additional variable. For example, what if we want to understand what percentage of cars with 4, 6, and 8 cylinders are manual versus automatic transmission? In this case, we first tally the number of vehicles in each cylinder and transmission category and then calculate the percentages of the total cars in each cylinder category. We then use this information to create a stacked bar chart.
+
+## Proportional Stacked Bars
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(datasets)
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(plyr)
+# calculate percentages of each cyl & am category
+proportion <- mtcars %>%
+        group_by(cyl, am) %>%
+        tally() %>%
+        group_by(cyl) %>%
+        mutate(pct = n / sum(n))
+
+proportion
+
+# create proportional stacked bars
+g<-ggplot(proportion, aes(factor(cyl), pct, fill = factor(am, levels = c(1, 0)))) +
+        geom_bar(stat = "identity", color = "grey40") +
+        scale_fill_manual(values = c("#a1d99b", "#31a354")) +
+        labs(fill = "AM")
+ggplotly(g)
+
+```
+
+## Add Value Markers
+
+- Often, it is helpful to provide labels/markers on the bar charts to help the reader interpret the results correctly or just to make it easier to read the graphic. For instance, we can add the actual mpg value to the following vertical bar chart by incorporating the geom_text() function and telling the function to label each bar with the mpg value. I can also tell ggplot to nudge the values left or right sit within or outside the bar and also color the text.
+
+### Add Labels on Bars
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+p1 <- ggplot(mtcars, aes(reorder(row.names(mtcars), mpg), mpg)) +
+        geom_bar(stat = "identity") +
+        coord_flip() +
+        geom_text(aes(label = mpg), nudge_y = 2)
+
+p2 <- ggplot(mtcars, aes(reorder(row.names(mtcars), mpg), mpg)) +
+        geom_bar(stat = "identity") +
+        coord_flip() +
+        geom_text(aes(label = mpg), nudge_y = -2, color = "white")
+
+grid.arrange(p1, p2, ncol = 2)
+
+```
+
+- If you want to draw attention to one specific bar you can create a new TRUE/FALSE variable that marks the specific vehicle of interest. In the following case I also add the Make of the car as a variable since the mtcars only uses the make as a row name, which can be erased when making changes to the data frame. You can then fill by the new ID variable in the first line of code and use annotate() to specify the exact text you want to highlight for that bar.
+
+## Draw attention to one specific bar
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+cars <- mtcars %>%
+        mutate(Make = row.names(mtcars),
+               ID = ifelse(Make == "Fiat X1-9", TRUE, FALSE))
+
+ggplot(cars, aes(reorder(Make, mpg), mpg, fill = ID)) +
+        geom_bar(stat = "identity") +
+        coord_flip() +
+        scale_fill_manual(values = c("grey90", "dodgerblue")) +
+        annotate("text", x = "Fiat X1-9", y = 22, label = "mpg = 27.3", color = "white") +
+        theme_minimal() +
+        theme(legend.position = "none")
+
+```
+
+- Labelling grouped bars is similar, however, we need to add a position = position_dodge(0.9) argument to the geom_text() function to tell ggplot to adjust the text location. By default, the values will be centered on the top of the bar (Fig. A) but you can adjust the text to the top of the bar by including a vjust = .5 argument or adjust the text to within the bar with vjust = 1.5
+
+## labeling grouped bar graph
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+p1 <- ggplot(avg_mpg, aes(factor(cyl), mpg, fill = factor(am))) +
+        geom_bar(stat = "identity", position = "dodge") +
+        geom_text(aes(label = round(mpg, 1)), position = position_dodge(0.9),vjust=-0.5) +
+        ggtitle("Fig A: Default text alignment")
+
+p2 <- ggplot(avg_mpg, aes(factor(cyl), mpg, fill = factor(am))) +
+        geom_bar(stat = "identity", position = "dodge") +
+        geom_text(aes(label = round(mpg, 1)), position = position_dodge(0.9),
+                  vjust = 1.5, color = "white") +
+        ggtitle("Fig B: Adjusted text alignment")
+
+grid.arrange(p1, p2, ncol = 2)
+
+```
+
+- To add labels to a proportional bar chart we need to create a new variable in or data frame to specify the location. To do this I create a label_y variable that just cumsums the proportions for each cylinder. You can then map the label variables to these values by incorporating the y = label_y argument in geom_text() which will place the labels at the top of of each stacked proportion bar.
+
+## Add labels to proportional bar graphs
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+# create label location for each proportional bar
+proportion <- proportion %>%
+        group_by(cyl) %>%
+        mutate(label_y = cumsum(pct))
+
+ggplot(proportion, aes(factor(cyl), pct, fill = factor(am, levels = c(1, 0)))) +
+        geom_bar(stat = "identity", color = "black") +
+        geom_text(aes(label = round(pct, 2), y = label_y), vjust = 1.5, color = "white") +
+        scale_fill_manual(values = c("red", "blue")) +
+        labs(fill = "AM")
+
+```
+
+## Barplots,Piechart,Density Plots and Histogram
+
+### Use billboarder and breakDown packages
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(billboarder)
+library(breakDown)
+library(datasets)
+data(mtcars)
+str(mtcars)
+
+cyl<-as.factor(mtcars$cyl)
+cyl<-table(mtcars$cyl)
+
+billboarder()%>%
+        bb_barchart(cyl)
+
+```
+
+## Horizontal Bars
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(billboarder)
+library(breakDown)
+library(datasets)
+data(mtcars)
+str(mtcars)
+
+cyl<-as.factor(mtcars$cyl)
+cyl<-table(mtcars$cyl)
+
+billboarder()%>%
+        bb_barchart(cyl,rotated=TRUE)
+
+```
+
+## Barchat continued
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(billboarder)
+library(breakDown)
+library(datasets)
+data(mtcars)
+
+am<-as.factor(mtcars$am)
+am<-table(mtcars$am)
+
+billboarder()%>%
+        bb_barchart(am)
+
+```
+
+## Histogram using the billboarder package
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(billboarder)
+library(breakDown)
+library(datasets)
+data(mtcars)
+
+mpg<-mtcars$mpg #use continuous data for histograms
+
+billboarder()%>%
+        bb_histogram(mpg)
+
+#lets use wt which is continuos
+wt<-mtcars$wt
+billboarder()%>%
+        bb_histogram(wt)
+
+#introduce group
+cyl<-as.factor(mtcars$cyl)
+
+billboarder()%>%
+        bb_histogram(mpg,group=cyl)
+
+```
+
+## Density plot using billboarder package
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(billboarder)
+library(breakDown)
+library(datasets)
+data(mtcars)
+
+#first density plot
+cyl<-as.factor(mtcars$cyl)
+
+billboarder()%>%
+        bb_densityplot(mpg,group=cyl)
+
+#second density plot
+gear<-as.factor(mtcars$gear)
+billboarder()%>%
+        bb_densityplot(mpg,group=gear)
+
+#third density plot
+hp<-mtcars$hp
+vs<-as.factor(mtcars$vs)
+
+billboarder()%>%
+        bb_densityplot(hp,group=vs)
+
+```
+
+## Pie Chart using the billboarder package
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(billboarder)
+library(breakDown)
+library(dplyr)
+library(datasets)
+data(mtcars)
+
+#first pie chart
+cyl<-as.factor(mtcars$cyl)
+cyl<-table(mtcars$cyl)
+
+billboarder()%>%
+        bb_piechart(cyl)
+
+#second pie chart
+gear<-table(mtcars$gear)
+
+billboarder()%>%
+        bb_piechart(gear)
+
+#third pie chart
+mpg<-as.factor(mtcars$mpg)
+mpg<-table(mtcars$mpg)
+
+billboarder()%>%
+        bb_piechart(mpg)
+
+```
+
+## Lollipop Chart with Conditional Color
+
+- Add a new column to your dataframe specifying if you are over or under the threshold(use an ifelse statement).
+
+- Give this column to the color aesthetic.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(dplyr)
+library(ggplot2)
+library(plotly)
+x<-seq(0,2*pi,length.out=100)
+data<-data.frame(x=x,y=sin(x)+rnorm(100,sd=0.2))
+#add a column with your condition for the color
+
+data<-data %>%
+        mutate(mycolor=ifelse(y>0,"type1","type2"))
+
+#plot
+g<-ggplot(data,aes(x=x,y=y))+geom_segment(aes(x=x,xend=x,y=0,yend=y,color=mycolor,size=1.3,alpha=0.9))+theme_light()+theme(legend.position="none",panel.border=element_blank())+xlab("")+ylab("value of Y")
+ggplotly(g)
+
+```
+
+## Lollipop considering a dataset
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(datasets)
+data(mtcars)
+data<-select(mtcars,mpg,hp)
+x<-mtcars$hp
+y<-mtcars$mpg
+mny<-mean(y)
+data<-data %>%
+        mutate(mycolor=ifelse(y>mny,"type1","type2"))
+#plot
+g<-ggplot(data,aes(x=x,y=y))+geom_segment(aes(x=x,xend=x,y=mny,yend=y,color=mycolor,size=1.2,alpha=0.9))+theme_light()+theme(legend.position="none",panel.border=element_blank())+xlab("")+ylab("value of Y")
+ggplotly(g)
+
+```
+
+## Custom Lollipop Chart
+
+- The plot is made up of;
+
+1. A marker
+
+2. A stem
+
+- The marker can be customized with ggplot2
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(tidyverse)
+#create data
+data<-data.frame(x=LETTERS[1:26],y=abs(rnorm(26)))
+
+#plot
+g<-ggplot(data,aes(x=x,y=y))+geom_segment(aes(x=x,xend=x,y=0,yend=y))+geom_point(size=5,color="red",
+        fill=alpha("orange",0.3),alpha=0.7,shape=21,stroke=2)
+ggplotly(g)
+
+
+```
+
+## Custom Lollipop chart considering a dataset
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(datasets)
+data(mtcars)
+data<-select(mtcars,mpg,hp)
+x<-mtcars$hp
+y<-mtcars$mpg
+
+#plot
+g<-ggplot(data,aes(x=x,y=y))+geom_segment(aes(x=x,xend=x,y=0,yend=y))+geom_point(size=5,color="red",
+        fill=alpha("orange",0.3),alpha=0.7,shape=21,stroke=2)+xlab("HP")+ylab("MPG")+ggtitle("Custom Lollipop of HP and MPG")
+ggplotly(g)
+
+```
+
+## Custom Lollipop with conditional color
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(datasets)
+data(mtcars)
+data<-select(mtcars,mpg,hp)
+x<-mtcars$hp
+y<-mtcars$mpg
+mny<-mean(y)
+data<-data %>%
+        mutate(mycolor=ifelse(y>mny,"type1","type2"))
+#plot
+g<-ggplot(data,aes(x=x,y=y))+geom_segment(aes(x=x,xend=x,y=mny,yend=y,color=mycolor))+geom_point(size=5,color="red",fill=alpha("orange",0.5),alpha=0.7,shape=21,stroke=2)+xlab("HP")+ylab("MPG")+ggtitle("Custom Lollipop of HP and MPG with conditional color")
+ggplotly(g)
+
+```
+
+## Stem Chart
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(tidyverse)
+library(ggplot2)
+library(plotly)
+#create data
+data<-data.frame(x=LETTERS[1:26],y=abs(rnorm(26)))
+
+#plot
+g<-ggplot(data,aes(x=x,y=y))+geom_segment(aes(x=x,xend=x,y=0,yend=y),size=1,color="blue",
+linetype="dotdash")+geom_point(size=4,color="red",
+fill=alpha("orange",0.9),alpha=0.7,shape=20,stroke=2)
+ggplotly(g)
+
+
+```
+
+## Stem Chart considering a dataset
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(datasets)
+data(mtcars)
+data<-select(mtcars,mpg,hp)
+x<-mtcars$hp
+y<-mtcars$mpg
+
+#plot
+g<-ggplot(data,aes(x=x,y=y))+geom_segment(aes(x=x,xend=x,y=0,yend=y),size=1,color="blue",
+linetype="dotdash")+geom_point(size=5,color="red",
+fill=alpha("orange",0.3),alpha=0.7,shape=20,stroke=2)+xlab("HP")+ylab("MPG")+ggtitle("Custom Stem of HP and MPG")
+ggplotly(g)
+
+```
+
+## Custom Stem Chart with conditional color
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(datasets)
+data(mtcars)
+data<-select(mtcars,mpg,hp)
+x<-mtcars$hp
+y<-mtcars$mpg
+mny<-mean(y)
+data<-data %>%
+        mutate(mycolor=ifelse(y>mny,"type1","type2"))
+#plot
+g<-ggplot(data,aes(x=x,y=y))+geom_segment(aes(x=x,xend=x,y=mny,yend=y,color=mycolor),size=1,color="blue",linetype="dotdash")+geom_point(size=5,color="red",fill=alpha("orange",0.5),alpha=0.7,shape=20,stroke=2)+xlab("HP")+ylab("MPG")+ggtitle("Custom Stem Chart of HP and MPG with conditional color")
+ggplotly(g)
+
+```
+
+
+

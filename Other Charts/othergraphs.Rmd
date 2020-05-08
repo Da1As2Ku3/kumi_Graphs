@@ -1,0 +1,155 @@
+---
+title: "Other Graphs"
+author: "David Asare Kumi"
+date: "4/3/2020"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+
+## Correlation Matrix
+
+- Here we are not going to focus on data that is categorical.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(datasets)
+data(mtcars)
+head(mtcars)
+
+mt_cor<-cor(mtcars)
+round(mt_cor,2)
+
+```
+
+## Graph the correlation matrix
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(datasets)
+library(corrplot)
+data(mtcars)
+
+corrplot(mt_cor)
+
+```
+
+## Some options of the corrplot() function
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(datasets)
+library(corrplot)
+data(mtcars)
+
+corrplot(mt_cor,method="shade",shade.col = NA,tl.col = "black",tl.srt = 45)
+
+```
+
+## Display tables representing the correlation
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(datasets)
+library(corrplot)
+data(mtcars)
+
+# Generate a lighter palette
+col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+
+corrplot(mt_cor, method="shade", shade.col=NA, tl.col="black", tl.srt=45,
+col=col(200), addCoef.col="black", addcolorlabel="no", order="AOE")
+
+```
+
+## Display tables representing the correlation(alternative)
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(datasets)
+library(corrplot)
+data(mtcars)
+
+# Generate a lighter palette
+colors <- c("lightblue","orange","pink","yellow","yellowgreen","white","red","maroon","fuchsia",
+            "aqua")
+
+corrplot(mt_cor, method="shade", shade.col=NA, tl.col="black", tl.srt=45,
+col=colors(200), addCoef.col="white", addcolorlabel="no", order="AOE")
+
+```
+
+## Display tables representing the correlation(alternative with method=ellipse)
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(datasets)
+library(corrplot)
+data(mtcars)
+
+# Generate a lighter palette
+colors <- c("lightblue","orange","pink","yellow","yellowgreen","white","red","maroon","fuchsia",
+            "aqua")
+
+corrplot(mt_cor, method="ellipse", shade.col=NA, tl.col="black", tl.srt=45,
+col=colors(200), addCoef.col="white", addcolorlabel="no", order="AOE")
+
+```
+
+## Display tables representing the correlation(alternative with order=hclust)
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(datasets)
+library(corrplot)
+data(mtcars)
+
+# Generate a lighter palette
+colors <- c("lightblue","orange","pink","yellow","yellowgreen","white","red","maroon","fuchsia",
+            "aqua")
+
+corrplot(mt_cor, method="shade", shade.col=NA, tl.col="black", tl.srt=45,
+col=colors(200), addCoef.col="white", addcolorlabel="no", order="hclust")
+
+```
+
+## Options for corrplot()
+
+- type={"lower" | "upper"} Only use the lower or upper triangle.
+
+- diag=FALSE Don’t show values on the diagonal.
+
+- addshade="all" Add lines indicating the direction of the correlation.
+
+- shade.col=NA Hide correlation direction lines.
+
+- method="shade" Use colored squares.
+
+- method="ellipse" Use ellipses.
+
+- addCoef.col="color" Add correlation coefficients, in color.
+
+- tl.srt="number" Specify the rotation angle for top labels.
+
+- tl.col="color" Specify the label color.
+
+- order={"AOE" | "FPC" | "hclust"} Sort labels using angular order of eigenvectors, first principle component, or hierarchical clustering
+
+## Creating a Network Graph
+
+- Use the igraph package. To create a graph, pass a vector containing pairs of items to
+graph(), then plot the resulting object
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+
+library(igraph)
+library(ggplot2)
+library(plotly)
+
+# Specify edges for a directed graph
+gd <- graph(c(1,2, 2,3, 2,4, 1,4, 5,5, 3,6))
+plot(gd)
+
+# For an undirected graph
+gu <- graph(c(1,2, 2,3, 2,4, 1,4, 5,5, 3,6), directed=FALSE)
+# No labels
+plot(gu, vertex.label=NA)
+
+```
+
+

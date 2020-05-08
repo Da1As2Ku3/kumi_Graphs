@@ -1,0 +1,1335 @@
+---
+title: "LineGraphs"
+author: "David Asare Kumi"
+date: "4/3/2020"
+output: html_document
+---
+
+
+## Line Graphs
+
+- Line graphs are typically used for visualizing how one continuous variable, on the yaxis,
+changes in relation to another continuous variable, on the x-axis. Often the x
+variable represents time, but it may also represent some other continuous quantity, like
+the amount of a drug administered to experimental subjects.
+
+- As with bar graphs, there are exceptions. Line graphs can also be used with a discrete
+variable on the x-axis. This is appropriate when the variable is ordered (e.g., “small”,
+“medium”, “large”), but not when the variable is unordered (e.g., “cow”, “goose”, “pig”).
+Most of the examples in this chapter use a continuous x variable, but we’ll see one
+example where the variable is converted to a factor and thus treated as a discrete variable.
+
+## Making a Basic Line Graph
+
+- Use ggplot() with geom_line(), and specify what variables you mapped to x and y
+
+- ggplot(BOD, aes(x=Time, y=demand)) + geom_line()
+
+- Line graphs can be made with discrete (categorical) or continuous (numeric) variables
+on the x-axis. In the example here, the variable demand is numeric, but it could be treated
+as a categorical variable by converting it to a factor with factor(). When the x variable is a factor, you must also use aes(group=1) to ensure that ggplot() knows that the data points belong together and should be connected with a line.
+
+- ggplot(BOD1, aes(x=Time, y=demand, group=1)) + geom_line().
+
+- With ggplot2, the default y range of a line graph is just enough to include the y values
+in the data. For some kinds of data, it’s better to have the y range start from zero. You
+can use ylim() to set the range, or you can use expand_limits() to expand the range
+to include a value. This will set the range from zero to the maximum value of the demand
+column in BOD.
+
+- These have the same result;
+
+1. ggplot(BOD, aes(x=Time, y=demand)) + geom_line() + ylim(0, max(BOD$demand)).
+
+2. ggplot(BOD, aes(x=Time, y=demand)) + geom_line() + expand_limits(y=0).
+
+## Adding Points to a Line Graph
+
+- Add geom_point().
+
+- ggplot(BOD, aes(x=Time, y=demand)) + geom_line() + geom_point().
+
+### Example
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+data(worldpop)
+glimpse(worldpop)
+
+g<-ggplot(worldpop, aes(x=Year, y=Population)) + geom_line() + geom_point()
+ggplotly(g)
+
+# Same with a log y-axis
+g1<-ggplot(worldpop, aes(x=Year, y=Population)) + geom_line() + geom_point() + scale_y_log10()
+ggplotly(g1)
+
+```
+
+- Year is an integer so we convert it to a factor and introduce group=1.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+data(worldpop)
+
+
+#convert year to a factor and introduce group=1
+Year<-as.factor(worldpop$Year)
+g<-ggplot(worldpop, aes(x=Year, y=Population, group=1)) + geom_line(color="red") + geom_point() +
+  xlab("Year") + ylab("Population") + ggtitle("Line Graph of World Population")
+
+ggplotly(g)
+
+# Same with a log y-axis
+g1<-ggplot(worldpop, aes(x=Year, y=Population, group=1)) + geom_line(color="blue") + geom_point() + scale_y_log10()
+ggplotly(g1)
+
+```
+
+## Making a Line Graph with Multiple Lines
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+data(ToothGrowth)
+str(ToothGrowth)
+
+# Load plyr so we can use ddply() to create the example data set
+library(plyr)
+
+# Summarize the ToothGrowth data
+tg <- ddply(ToothGrowth, c("supp", "dose"), summarise, length=mean(len))
+
+# Map supp to colour
+g1<-ggplot(tg, aes(x=dose, y=length, colour=supp)) + geom_line()
+ggplotly(g1)
+
+# Map supp to linetype
+g2<-ggplot(tg, aes(x=dose, y=length, linetype=supp)) + geom_line()
+ggplotly(g2)
+
+grid.arrange(g1,g2,ncol=2)
+
+```
+
+## Convert continuous x variable as a factor and introduce group
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+data(ToothGrowth)
+
+# Load plyr so we can use ddply() to create the example data set
+library(plyr)
+
+# Summarize the ToothGrowth data
+tg <- ddply(ToothGrowth, c("supp", "dose"), summarise, length=mean(len))
+
+g<-ggplot(tg, aes(x=factor(dose), y=length, colour=supp, group=supp)) + geom_line()
+ggplotly(g)
+
+```
+
+- Notice the use of group=supp. Without this statement, ggplot() won’t know how to
+group the data together to draw the lines, and it will give an error.
+
+- ggplot(tg, aes(x=factor(dose), y=length, colour=supp)) + geom_line()
+geom_path: Each group consists of only one observation. Do you need to adjust the
+group aesthetic?
+
+- Another common problem when the incorrect grouping is used is that you will see a
+jagged sawtooth pattern, as in the figure below.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+data(ToothGrowth)
+
+# Load plyr so we can use ddply() to create the example data set
+library(plyr)
+
+# Summarize the ToothGrowth data
+tg <- ddply(ToothGrowth, c("supp", "dose"), summarise, length=mean(len))
+
+ggplot(tg, aes(x=dose, y=length)) + geom_line()
+
+```
+
+- This happens because there are multiple data points at each y location, and ggplot()
+thinks they’re all in one group. The data points for each group are connected with a
+single line, leading to the sawtooth pattern. If any discrete variables are mapped to aesthetics
+like colour or linetype, they are automatically used as grouping variables. But
+if you want to use other variables for grouping (that aren’t mapped to an aesthetic), they
+should be used with group.
+
+- If your plot has points along with the lines, you can also map variables to properties of
+the points, such as shape and fill.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+data(ToothGrowth)
+
+# Load plyr so we can use ddply() to create the example data set
+library(plyr)
+
+# Summarize the ToothGrowth data
+tg <- ddply(ToothGrowth, c("supp", "dose"), summarise, length=mean(len))
+
+g1<-ggplot(tg, aes(x=dose, y=length, shape=supp)) + geom_line() +
+geom_point(size=4) # Make the points a little larger
+ggplotly(g1)
+
+g2<-ggplot(tg, aes(x=dose, y=length, fill=supp)) + geom_line() +
+geom_point(size=4, shape=21) # Also use a point with a color fill
+ggplotly(g2)
+
+#employ gridExtra package
+grid.arrange(g1,g2,ncol=2)
+
+```
+
+- Sometimes points will overlap. In these cases, you may want to dodge them, which means
+their positions will be adjusted left and right (Figure 4-10). When doing so, you must
+also dodge the lines, or else only the points will move and they will be misaligned. You
+must also specify how far they should move when dodged:
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+data(ToothGrowth)
+
+# Load plyr so we can use ddply() to create the example data set
+library(plyr)
+
+# Summarize the ToothGrowth data
+tg <- ddply(ToothGrowth, c("supp", "dose"), summarise, length=mean(len))
+
+g<-ggplot(tg, aes(x=dose, y=length, shape=supp)) +
+geom_line(position=position_dodge(0.2)) + # Dodge lines by 0.2
+geom_point(position=position_dodge(0.2), size=4) # Dodge points by 0.2
+ggplotly(g)
+
+```
+
+## Changing the Appearance of Lines
+
+- The type of line (solid, dashed, dotted, etc.) is set with linetype, the thickness (in mm)
+with size, and the color of the line with colour.
+These properties can be set as shown below by passing them values in the call
+to geom_line():
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+data(BOD)
+str(BOD)
+
+g1<-ggplot(BOD, aes(x=Time, y=demand)) +
+geom_line(linetype="dashed", size=1, colour="blue")
+ggplotly(g1)
+
+g2<-ggplot(BOD, aes(x=factor(Time), y=demand,group=1)) +
+geom_line(linetype="dashed", size=1, colour="blue")
+ggplotly(g2)
+
+grid.arrange(g1,g2,ncol=2)
+
+```
+
+- The default colors aren’t the most appealing, so you
+may want to use a different palette, as shown in Figure 4-12, by using scale_col
+our_brewer() or scale_colour_manual().
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+data(ToothGrowth)
+
+# Load plyr so we can use ddply() to create the example data set
+library(plyr)
+
+# Summarize the ToothGrowth data
+tg <- ddply(ToothGrowth, c("supp", "dose"), summarise, length=mean(len))
+
+g<-ggplot(tg, aes(x=dose, y=length, colour=supp)) +
+geom_line() + scale_colour_brewer(palette="Set1")
+ggplotly(g)
+
+```
+
+- To set a single constant color for all the lines, specify colour outside of aes(). The same
+works for size, linetype, and point shape (Figure 4-13). You may also have to specify
+the grouping variable.
+
+
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+data(ToothGrowth)
+
+# Load plyr so we can use ddply() to create the example data set
+library(plyr)
+
+# Summarize the ToothGrowth data
+tg <- ddply(ToothGrowth, c("supp", "dose"), summarise, length=mean(len))
+
+# If both lines have the same properties, you need to specify a variable to
+# use for grouping
+g1<-ggplot(tg, aes(x=dose, y=length, group=supp)) +
+geom_line(colour="darkgreen", size=1.5)
+ggplotly(g1)
+
+# Since supp is mapped to colour, it will automatically be used for grouping
+g2<-ggplot(tg, aes(x=dose, y=length, colour=supp)) +
+geom_line(linetype="dashed") +
+geom_point(shape=22, size=3, fill="white")
+ggplotly(g2)
+
+#apply gridExtra package
+grid.arrange(g1,g2,ncol=2)
+
+```
+
+## Changing the Appearance of Points
+
+- In geom_point(), set the size, shape, colour, and/or fill outside of aes() (the result
+is shown below).
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+data(BOD)
+
+g<-ggplot(BOD, aes(x=Time, y=demand)) +
+geom_line() +
+geom_point(size=4, shape=22, colour="darkred", fill="pink")
+ggplotly(g)
+
+```
+
+- The default shape for points is a solid circle, the default size is 2, and the default colour
+is "black". The fill color is relevant only for some point shapes (numbered 21–25),
+which have separate outline and fill colors. The fill color is typically NA, or empty; you can fill it with white to get hollow-looking circles, as shown below.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+data(BOD)
+
+g<-ggplot(BOD, aes(x=Time, y=demand)) +
+geom_line() +
+geom_point(size=4, shape=21, fill="white")
+ggplotly(g)
+
+```
+
+- For multiple lines, we saw how to draw differently colored points for eachgroup by mapping variables to aesthetic properties of points, inside of aes(). The default colors are not very appealing, so you may want to use a different palette, using scale_colour_brewer() or scale_colour_manual(). To set a single constant shape or size for all the points, specify shape or size outside of aes():
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+data(ToothGrowth)
+
+# Load plyr so we can use ddply() to create the example data set
+library(plyr)
+# Summarize the ToothGrowth data
+tg <- ddply(ToothGrowth, c("supp", "dose"), summarise, length=mean(len))
+# Save the position_dodge specification because we'll use it multiple times
+pd <- position_dodge(0.2)
+
+g<-ggplot(tg, aes(x=dose, y=length, fill=supp)) +
+geom_line(position=pd) +
+geom_point(shape=21, size=3, position=pd) +
+scale_fill_manual(values=c("black","white"))
+ggplotly(g)
+
+```
+
+## Making a Graph with a Shaded Area
+
+- Use geom_area() to get a shaded area.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+data(sunspotyear)
+
+# Convert the sunspot.year data set into a data frame for this example
+sunspotyear <- data.frame(
+Year = as.numeric(time(sunspot.year)),
+Sunspots = as.numeric(sunspot.year)
+)
+g<-ggplot(sunspotyear, aes(x=Year, y=Sunspots)) + geom_area()
+ggplotly(g)
+
+```
+
+- By default, the area will be filled with a very dark grey and will have no outline. The
+color can be changed by setting fill. In the following example, we’ll set it to "blue",
+and we’ll also make it 80% transparent by setting alpha to 0.2. This makes it possible to
+see the grid lines through the area, as shown below. We’ll also add an outline,
+by setting colour:
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+data(sunspotyear)
+
+# Convert the sunspot.year data set into a data frame for this example
+sunspotyear <- data.frame(
+Year = as.numeric(time(sunspot.year)),
+Sunspots = as.numeric(sunspot.year)
+)
+g<-ggplot(sunspotyear, aes(x=Year, y=Sunspots)) +
+geom_area(colour="black", fill="blue", alpha=.2)
+ggplotly(g)
+
+```
+
+- Having an outline around the entire area might not be desirable, because it puts a vertical
+line at the beginning and end of the shaded area, as well as one along the bottom. To
+avoid this issue, we can draw the area without an outline (by not specifying colour),
+and then layer a geom_line() on top, as shown below.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+data(sunspotyear)
+
+# Convert the sunspot.year data set into a data frame for this example
+sunspotyear <- data.frame(
+Year = as.numeric(time(sunspot.year)),
+Sunspots = as.numeric(sunspot.year)
+)
+
+g<-ggplot(sunspotyear, aes(x=Year, y=Sunspots)) +
+geom_area(fill="blue", alpha=.2) +
+geom_line()
+ggplotly(g)
+
+```
+
+## Making a Stacked Area Graph
+
+- Use geom_area() and map a factor to fill.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+data(uspopage)
+
+g<-ggplot(uspopage, aes(x=Year, y=Thousands, fill=AgeGroup)) + geom_area()
+ggplotly(g)
+
+```
+
+- The sort of data that is plotted with a stacked area chart is often provided in a wide
+format, but ggplot2() requires data to be in long format.
+
+- The default order of legend items is the opposite of the stacking order. The legend can
+be reversed by setting the breaks in the scale. This version of the chart reverses the legend order, changes the palette to a range of blues, and adds thin (size=.2) lines between each area. It also makes the filled areas semitransparent (alpha=.4), so that it is possible to see the grid lines through them:
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+data(uspopage)
+
+g<-ggplot(uspopage, aes(x=Year, y=Thousands, fill=AgeGroup)) +
+geom_area(colour="black", size=.2, alpha=.4) +
+scale_fill_brewer(palette="Blues", breaks=rev(levels(uspopage$AgeGroup)))
+ggplotly(g)
+
+```
+
+- To reverse the stacking order, we’ll put order=desc(AgeGroup) inside of aes().
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+data(uspopage)
+
+library(plyr) # For the desc() function
+g<-ggplot(uspopage, aes(x=Year, y=Thousands, fill=AgeGroup, order=desc(AgeGroup))) +
+geom_area(colour="black", size=.2, alpha=.4) +
+scale_fill_brewer(palette="Blues")
+ggplotly(g)
+
+```
+
+
+- Since each filled area is drawn with a polygon, the outline includes the left and right
+sides. This might be distracting or misleading. To get rid of it, first draw the stacked areas without an outline (by leaving colour as the default NA value), and then add a geom_line() on top.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+data(uspopage)
+
+ggplot(uspopage, aes(x=Year, y=Thousands, fill=AgeGroup, order=desc(AgeGroup))) +
+geom_area(colour=NA, alpha=.4) +
+scale_fill_brewer(palette="Blues") +
+geom_line(position="stack", size=.2)
+
+```
+
+## Making a Proportional Stacked Area Graph
+
+- You want to make a stacked area graph with the overall height scaled to a constant value.
+
+- First, calculate the proportions. In this example, we’ll use ddply() to break uspopage
+into groups by Year, then calculate a new column, Percent. This value is the Thousands for each row, divided by the sum of Thousands for each Year group, multiplied by 100 to get a percent value:
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+data(uspopage)
+
+library(plyr) # For the ddply() function
+# Convert Thousands to Percent
+uspopage_prop <- ddply(uspopage, "Year", transform,
+Percent = Thousands / sum(Thousands) * 100)
+
+#plot
+g<-ggplot(uspopage_prop, aes(x=Year, y=Percent, fill=AgeGroup)) +
+geom_area(colour="black", size=.2, alpha=.4) +
+scale_fill_brewer(palette="Blues", breaks=rev(levels(uspopage$AgeGroup)))
+ggplotly(g)
+
+```
+
+- Let’s take a closer look at the data and how it was summarized.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+data(uspopage)
+
+library(plyr) # For the ddply() function
+# Convert Thousands to Percent
+uspopage_prop <- ddply(uspopage, "Year", transform,
+Percent = Thousands / sum(Thousands) * 100)
+DT::datatable(uspopage_prop,options=list(pageLength=10))
+
+
+```
+
+## Adding a Confidence Region
+
+- You want to add a confidence region to a graph.
+
+- Use geom_ribbon() and map values to ymin and ymax.
+
+- In the climate data set, Anomaly10y is a 10-year running average of the deviation (in
+Celsius) from the average 1950–1980 temperature, and Unc10y is the 95% confidence
+interval. We’ll set ymax and ymin to Anomaly10y plus or minus Unc10y.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+data(climate)
+
+# Grab a subset of the climate data
+clim <- subset(climate, Source == "Berkeley",
+select=c("Year", "Anomaly10y", "Unc10y"))
+
+# Shaded region
+gg<-ggplot(clim, aes(x=Year, y=Anomaly10y)) +
+geom_ribbon(aes(ymin=Anomaly10y-Unc10y, ymax=Anomaly10y+Unc10y),
+alpha=0.2) +
+geom_line()
+ggplotly(gg)
+
+
+```
+
+- The shaded region is actually a very dark grey, but it is mostly transparent. The transparency
+is set with alpha=0.2, which makes it 80% transparent.
+
+-Notice that the geom_ribbon() is before geom_line(), so that the line is drawn on top
+of the shaded region. If the reverse order were used, the shaded region could obscure
+the line. In this particular case that wouldn’t be a problem since the shaded region is
+mostly transparent, but it would be a problem if the shaded region were opaque.
+
+- Instead of a shaded region, you can also use dotted lines to represent the upper and
+lower bounds.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+data(climate)
+
+# With a dotted line for upper and lower bounds
+g<-ggplot(clim, aes(x=Year, y=Anomaly10y)) +
+geom_line(aes(y=Anomaly10y-Unc10y), colour="grey50", linetype="dotted") +
+geom_line(aes(y=Anomaly10y+Unc10y), colour="grey50", linetype="dotted") +
+geom_line()
+ggplotly(g)
+
+```
+
+## Summarizing Data by Groups
+
+- You want to summarize your data, based on one or more grouping variables.
+
+- Use ddply() from the plyr package with the summarise() function, and specify the
+operations to do:
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+
+library(MASS) # For the data set
+library(plyr)
+
+summ_cab<-ddply(cabbages, c("Cult", "Date"), summarise, Weight = mean(HeadWt),
+VitC = mean(VitC))
+
+DT::datatable(summ_cab,options=list(pageLength=10))
+
+```
+
+- Let’s take a closer look at the cabbages data set. It has two factors that can be used as
+grouping variables: Cult, which has levels c39 and c52, and Date, which has levels d16,
+d20, and d21. It also has two numeric variables, HeadWt and VitC:
+
+- Finding the overall mean of HeadWt is simple. We could just use the mean() function on
+that column, but for reasons that will soon become clear, we’ll use the summarise()
+function instead:
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+
+library(MASS) # For the data set
+library(plyr)
+
+summarise(cabbages, Weight = mean(HeadWt))
+
+```
+
+- The result is a data frame with one row and one column, named Weight.
+
+- Often we want to find information about each subset of the data, as specified by a
+grouping variable. For example, suppose we want to find the mean of each Cult group.
+To do this, we can use ddply() with summarise(). Notice how the arguments get shifted
+around when we use them together:
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+
+library(MASS) # For the data set
+library(plyr)
+
+ddply(cabbages, "Cult", summarise, Weight = mean(HeadWt))
+
+```
+
+- Summarizing the data frame by splitting it up with more variables (or columns) is simple:
+just use a vector that names the additional variables. It’s also possible to get more than
+one summary value by specifying more calculated columns. Here we’ll summarize each
+Cult and Date group, getting the average of HeadWt and VitC:
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+
+library(MASS) # For the data set
+library(plyr)
+
+summ_cab<-ddply(cabbages, c("Cult", "Date"), summarise, Weight = mean(HeadWt),
+VitC = mean(VitC))
+
+DT::datatable(summ_cab,options=list(pageLength=10))
+
+```
+
+- It’s possible to do more than take the mean. You may, for example, want to compute the
+standard deviation and count of each group. To get the standard deviation, use the sd()
+function, and to get a count, use the length() function:
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+
+library(MASS) # For the data set
+library(plyr)
+
+summ_cab<-ddply(cabbages, c("Cult", "Date"), summarise,
+Weight = mean(HeadWt),
+sd = sd(HeadWt),
+n = length(HeadWt))
+
+DT::datatable(summ_cab,options=list(pageLength=10))
+
+```
+
+## Dealing with NAs
+
+- One potential pitfall is that NAs in the data will lead to NAs in the output. Let’s see what
+happens if we sprinkle a few NAs into HeadWt:
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+
+library(MASS) # For the data set
+library(plyr)
+
+c1 <- cabbages # Make a copy
+c1$HeadWt[c(1,20,45)] <- NA # Set some values to NA
+ddply(c1, c("Cult", "Date"), summarise,
+Weight = mean(HeadWt),
+sd = sd(HeadWt),
+n = length(HeadWt))
+
+```
+
+- There are two problems here. The first problem is that mean() and sd() simply return
+NA if any of the input values are NA. Fortunately, these functions have an option to deal
+with this very issue: setting na.rm=TRUE will tell them to ignore the NAs.
+
+- The second problem is that length() counts NAs just like any other value, but since these
+values represent missing data, they should be excluded from the count. The length()
+function doesn’t have an na.rm flag, but we can get the same effect by using sum(!
+is.na(...)). The is.na() function returns a logical vector: it has a TRUE for each NA
+item, and a FALSE for all other items. It is inverted by the !, and then sum() adds up the
+number of TRUEs. The end result is a count of non-NAs:
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+
+library(MASS) # For the data set
+library(plyr)
+
+c1 <- cabbages # Make a copy
+ddply(c1, c("Cult", "Date"), summarise,
+Weight = mean(HeadWt, na.rm=TRUE),
+sd = sd(HeadWt, na.rm=TRUE),
+n = sum(!is.na(HeadWt)))
+
+```
+
+## Missing combinations
+
+- If there are any empty combinations of the grouping variables, they will not appear in
+the summarized data frame. These missing combinations can cause problems when making graphs. To illustrate, we’ll remove all entries that have levels c52 and d21. The graph on the left in Figure 15-3 shows what happens when there’s a missing combination in a bar graph:
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+
+library(MASS) # For the data set
+library(plyr)
+
+# Copy cabbages and remove all rows with both c52 and d21
+c2 <- subset(c1, !( Cult=="c52" & Date=="d21" ) )
+c2a <- ddply(c2, c("Cult", "Date"), summarise,
+Weight = mean(HeadWt, na.rm=TRUE),
+sd = sd(HeadWt, na.rm=TRUE),
+n = sum(!is.na(HeadWt)))
+
+c2a
+
+# Make the graph
+ggplot(c2a, aes(x=Date, fill=Cult, y=Weight)) + geom_bar(stat="identity",position="dodge")
+
+```
+
+- To fill in the missing combination (Figure 15-3, right), give ddply() the .drop=FALSE
+flag:
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+
+library(MASS) # For the data set
+library(plyr)
+
+c2b <- ddply(c2, c("Cult", "Date"), .drop=FALSE, summarise,
+Weight = mean(HeadWt, na.rm=TRUE),
+sd = sd(HeadWt, na.rm=TRUE),
+n = sum(!is.na(HeadWt)))
+c2b
+
+# Make the graph
+ggplot(c2b, aes(x=Date, fill=Cult, y=Weight)) + geom_bar(stat="identity",position="dodge")
+
+```
+
+## Summarizing Data with Standard Errors and Confidence Intervals
+
+- You want to summarize your data with the standard error of the mean and/or confidence
+intervals.
+
+- Getting the standard error of the mean involves two steps: first get the standard deviation
+and count for each group, then use those values to calculate the standard error. The
+standard error for each group is just the standard deviation divided by the square root
+of the sample size:
+
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+
+library(MASS) # For the data set
+library(plyr)
+
+ca <- ddply(cabbages, c("Cult", "Date"), summarise,
+Weight = mean(HeadWt, na.rm=TRUE),
+sd = sd(HeadWt, na.rm=TRUE),
+n = sum(!is.na(HeadWt)),
+se = sd/sqrt(n))
+
+#apply DT
+DT::datatable(ca,options=list(pageLength=10))
+
+```
+
+- Another method is to calculate the standard error in the call ddply. It’s not possible to
+refer to the sd and n columns inside of the ddply call, so we’ll have to recalculate them
+to get se. This will do the same thing as the two-step version shown previously:
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+
+library(MASS) # For the data set
+library(plyr)
+
+ddply(cabbages, c("Cult", "Date"), summarise,
+Weight = mean(HeadWt, na.rm=TRUE),
+sd = sd(HeadWt, na.rm=TRUE),
+n = sum(!is.na(HeadWt)),
+se = sd / sqrt(n)) 
+
+```
+
+## Confidence Intervals
+
+- Confidence intervals are calculated using the standard error of the mean and the degrees
+of freedom. To calculate a confidence interval, use the qt() function to get the quantile,
+then multiply that by the standard error. The qt() function will give quantiles of the tdistribution
+when given a probability level and degrees of freedom. For a 95% confidence
+interval, use a probability level of .975; for the bell-shaped t-distribution, this will in
+essence cut off 2.5% of the area under the curve at either end. The degrees of freedom
+equal the sample size minus one.
+
+- This will calculate the multiplier for each group. There are six groups and each has the
+same number of observations (10), so they will all have the same multiplier:
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+
+library(MASS) # For the data set
+library(plyr)
+
+ciMult <- qt(.975, ca$n-1)
+ciMult
+
+```
+
+- Now we can multiply that vector by the standard error to get the 95% confidence interval:
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+
+library(MASS) # For the data set
+library(plyr)
+
+ca$ci <- ca$se * ciMult
+ca$ci
+
+#We could have done this all in one line, like this:
+ca$ci95 <- ca$se * qt(.975, ca$n)
+ca$ci95
+
+#For a 99% confidence interval, use .995.
+
+```
+
+- Error bars that represent the standard error of the mean and confidence intervals serve
+the same general purpose: to give the viewer an idea of how good the estimate of the
+population mean is. The standard error is the standard deviation of the sampling distribution.
+Confidence intervals are easier to interpret. Very roughly, a 95% confidence
+interval means that there’s a 95% chance that the true population mean is within the
+interval (actually, it doesn’t mean this at all, but this seemingly simple topic is way too
+complicated to cover here; if you want to know more, read up on Bayesian statistics).
+
+- This function will perform all the steps of calculating the standard deviation, count,
+standard error, and confidence intervals. It can also handle NAs and missing combinations,
+with the na.rm and .drop options. By default, it provides a 95% confidence interval,
+but this can be set with the conf.interval argument:
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+
+library(MASS) # For the data set
+library(plyr)
+
+summarySE <- function(data=NULL, measurevar, groupvars=NULL,
+conf.interval=.95, na.rm=FALSE, .drop=TRUE) {
+require(plyr)
+# New version of length that can handle NAs: if na.rm==T, don't count them
+length2 <- function (x, na.rm=FALSE) {
+if (na.rm) sum(!is.na(x))
+else length(x)
+}
+# This does the summary
+datac <- ddply(data, groupvars, .drop=.drop,
+.fun = function(xx, col, na.rm) {
+c( n = length2(xx[,col], na.rm=na.rm),
+mean = mean (xx[,col], na.rm=na.rm),
+sd = sd (xx[,col], na.rm=na.rm)
+)
+},
+measurevar,
+na.rm
+)
+
+# Rename the "mean" column
+datac <- rename(datac, c("mean" = measurevar))
+datac$se <- datac$sd / sqrt(datac$n) # Calculate standard error of the mean
+
+ciMult <- qt(conf.interval/2 + .5, datac$n-1)
+datac$ci <- datac$se * ciMult
+return(datac)
+}
+
+```
+
+- The following usage example has a 99% confidence interval and handles NAs and missing
+combinations:
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+
+library(MASS) # For the data set
+library(plyr)
+
+# Remove all rows with both c52 and d21
+c2 <- subset(cabbages, !( Cult=="c52" & Date=="d21" ) )
+# Set some values to NA
+c2$HeadWt[c(1,20,45)] <- NA
+summarySE(c2, "HeadWt", c("Cult", "Date"), conf.interval=.99,
+na.rm=TRUE, .drop=FALSE)
+
+```
+
+- It will give this warning message when there are missing combinations. This isn’t a
+problem; it just indicates that it couldn’t calculate a quantile for a group with no observations.
+
+## Converting Data from Wide to Long
+
+- You want to convert a data frame from “wide” format to “long” format.
+
+- Use melt() from the reshape2 package. In the anthoming data set, for each angle, there
+are two measurements: one column contains measurements in the experimental condition
+and the other contains measurements in the control condition:
+
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+library(plyr)
+data(anthoming)
+head(anthoming)
+
+
+```
+
+- We can reshape the data so that all the measurements are in one column. This will put
+the values from expt and ctrl into one column, and put the names into a different
+column.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+library(plyr)
+data(anthoming)
+
+library(reshape2)
+melt(anthoming, id.vars="angle", variable.name="condition", value.name="count")
+
+```
+
+- This data frame represents the same information as the original one, but it is structured
+in a way that is more conducive to some analyses.
+
+- In the source data, there are ID variables and measure variables. The ID variables are
+those that specify which values go together. In the source data, the first row holds measurements
+for when angle is –20. In the output data frame, the two measurements, for
+expt and ctrl, are no longer in the same row, but we can still tell that they belong
+together because they have the same value of angle.
+
+- The measure variables are by default all the non-ID variables. The names of these variables
+are put into a new column specified by variable.name, and the values are put into
+a new column specified by value.name.
+
+- If you don’t want to use all the non-ID columns as measure variables, you can specify
+measure.vars. For example, in the drunk data set, we can use just the 0-29 and 30-39
+groups.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+library(plyr)
+data(drunk)
+head(drunk)
+
+melt(drunk, id.vars="sex", measure.vars=c("0-29", "30-39"),
+variable.name="age", value.name="count")
+
+```
+
+- It’s also possible to use more than one column as the ID variables.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+library(plyr)
+data(drunk)
+head(plum_wide)
+
+melt(plum_wide, id.vars=c("length","time"), variable.name="survival",
+value.name="count")
+
+```
+
+- Some data sets don’t come with a column with an ID variable. For example, in the
+corneas data set, each row represents one pair of measurements, but there is no ID
+variable. Without an ID variable, you won’t be able to tell how the values are meant to
+be paired together. In these cases, you can add an ID variable before using melt().
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+library(plyr)
+
+# Make a copy of the data
+co <- corneas
+co
+
+# Add an ID column
+co$id <- 1:nrow(co)
+melt(co, id.vars="id", variable.name="eye", value.name="thickness")
+
+```
+
+- Having numeric values for the ID variable may be problematic for subsequent analyses,
+so you may want to convert id to a character vector with as.character(), or a factor
+with factor().
+
+## Converting Data from Long to Wide
+
+- You want to convert a data frame from “long” format to “wide” format.
+
+- Use the dcast() function from the reshape2 package. In this example, we’ll use the
+plum data set, which is in a long format.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+library(plyr)
+data(plum)
+head(plum)
+
+```
+
+- The conversion to wide format takes each unique value in one column and uses those
+values as headers for new columns, then uses another column for source values. For
+example, we can “move” values in the survival column to the top and fill them with
+values from count.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+library(plyr)
+data(plum)
+
+library(reshape2)
+dcast(plum, length + time ~ survival, value.var="count")
+
+```
+
+- The dcast() function requires you to specify the ID variables (those that remain in
+columns) and the variable variables (those that get “moved to the top”). This is done
+with a formula where the ID variables are before the tilde (~) and the variable variables
+are after it.
+
+- In the preceding example, there are two ID variables and one variable variable. In the
+next one, there is one ID variable and two variable variables. When there is more than
+one variable variable, the values are combined with an underscore.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+library(plyr)
+data(plum)
+
+dcast(plum, time ~ length + survival, value.var="count")
+
+```
+
+## Converting a Time Series Object to Times and Values
+
+- You have a time series object that you wish to convert to numeric vectors representing
+the time and values at each time.
+
+- Use the time() function to get the time for each observation, then convert the times
+and values to numeric vectors with as.numeric():
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+library(plyr)
+data(nhtemp)
+head(nhtemp)
+
+# Put them in a data frame
+nht <- data.frame(year=as.numeric(time(nhtemp)), temp=as.numeric(nhtemp))
+nht
+
+```
+
+- Time series objects efficiently store information when there are observations at regular
+time intervals, but for use with ggplot2, they need to be converted to a format that
+separately represents times and values for each observation.
+
+- Some time series objects are cyclical. The presidents data set, for example, contains
+four observations per year, one for each quarter.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+library(plyr)
+data(presidents)
+head(presidents)
+
+```
+
+- To convert it to a two-column data frame with one column representing the year with
+fractional values, we can do the same as before.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+library(plyr)
+data(presidents)
+
+pres_rating <- data.frame(
+year = as.numeric(time(presidents)),rating = as.numeric(presidents)
+)
+pres_rating
+
+```
+
+- It is also possible to store the year and quarter in separate columns, which may be useful
+in some visualizations.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook) # For the data set
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(gridExtra)
+library(DT)
+library(plyr)
+
+pres_rating2 <- data.frame(
+year = as.numeric(floor(time(presidents))),
+quarter = as.numeric(cycle(presidents)),
+rating = as.numeric(presidents)
+)
+pres_rating2
+
+```
+
+- The zoo package is also useful for working with time series objects.
+
+

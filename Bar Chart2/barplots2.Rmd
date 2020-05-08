@@ -1,0 +1,460 @@
+---
+title: "Bar Graph2"
+author: "David Asare Kumi"
+date: "4/2/2020"
+output: html_document
+---
+
+
+## Basic Bar Graphs
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook)
+library(ggplot2)
+library(plotly)
+data(pg_mean)
+
+g<-ggplot(pg_mean,aes(x=group,y=weight))+geom_bar(stat="identity",fill="yellow",color="black")+
+  ggtitle("Barplot of Group and Weight")
+ggplotly(g)
+
+```
+
+## Grouping Bars Together
+
+- Group bars together by a second variable.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook)
+library(ggplot2)
+library(plotly)
+data(cabbage_exp)
+
+g<-ggplot(cabbage_exp,aes(x=Date,y=Weight,fill=Cultivar))+geom_bar(stat="identity",position="dodge") + xlab("Date")+ ylab("Weight")+ggtitle("Group Barplot of Date and Weight")
+ggplotly(g)
+
+```
+
+- It is important to note that, if you don't use position="dodge", you will end up with a stacked bar graph.
+
+- Variables mapped to the fill color must be categorical or factor variables and not continuous variables.
+
+## Set the colors
+
+1. Use scale_fill_brewer()
+
+2. Use scale_fill_manual()
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook)
+library(ggplot2)
+library(plotly)
+data(cabbage_exp)
+
+g<-ggplot(cabbage_exp,aes(x=Date,y=Weight,fill=Cultivar))+geom_bar(stat="identity",position="dodge",
+color="black")+scale_fill_brewer(palette="Dark2") + xlab("Date")+ ylab("Weight")+ggtitle("Group Barplot of Date and Weight")
+ggplotly(g)
+
+```
+
+- If there are missing observations in the categorical variable, the bar will be missing and the neighbouring bars will expand to fill that space.
+
+- If your data has this issue, you can manually make an entry for the missing factor level combination with an NA for the y variable.
+
+## Making a bar graph of counts
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(datasets)
+library(ggplot2)
+library(plotly)
+data(diamonds)
+
+g<-ggplot(diamonds,aes(x=cut,fill=cut))+ geom_bar()+xlab("Cut")+ylab("Count")+
+  ggtitle("Barplot showing count/frequency of cut ")
+ggplotly(g)
+
+```
+
+- In this example, with geom_bar(), the default behaviour is to use stat="bin" which counts up the number of cases for each group.
+
+- If we use a continuous variable on the x-axis, we get a histogram.
+
+## Continuous variable resulting in a histogram instead of a bar graph
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(datasets)
+library(ggplot2)
+library(plotly)
+data(diamonds)
+
+g<-ggplot(diamonds,aes(x=carat))+ geom_bar(stat="bin")+xlab("Carat")+ylab("Count")+
+  ggtitle("Barplot showing count/frequency of Carat ")
+ggplotly(g)
+
+```
+
+## Using colors in a bar graph
+
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook)
+library(ggplot2)
+library(plotly)
+data(uspopchange)
+
+upc<-subset(uspopchange,rank(Change)>40)
+
+g<-ggplot(upc,aes(x=Abb,y=Change,fill=Region))+geom_bar(stat="identity")
+ggplotly(g)
+
+```
+
+## Set colors manually
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook)
+library(ggplot2)
+library(plotly)
+data(uspopchange)
+
+upc<-subset(uspopchange,rank(Change)>40)
+
+g<-ggplot(upc,aes(x=reorder(Abb,Change),y=Change,fill=Region))+geom_bar(stat="identity",
+color="black")+scale_fill_manual(values=c("blue","yellow"))+xlab("State")
+ggplotly(g)
+
+# you can set the color using scale_fill_manual(values=c("#669933","#FFCC66"))
+
+```
+
+## Coloring Negative and Positive bars differently
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook)
+library(ggplot2)
+library(plotly)
+data(climate)
+
+csub<-subset(climate,Source=="Berkeley" & Year>=1900)
+csub$pos<-csub$Anomaly10y>=0
+
+g<-ggplot(csub,aes(x=Year,y=Anomaly10y,fill=pos))+geom_bar(stat="identity",position="identity")+
+  scale_fill_manual(values=c("yellow","blue"))+ggtitle("Barplot of Year and Anomaly10y")
+ggplotly(g)
+
+```
+
+- We can change the colors with scale_fill_manual() or scale_fill_brewer()
+
+- Remove the legend with guide=FALSE - this is deprecated.
+
+- During the plot, you can turn off legends by using the argument show.legend=FALSE in the geom_bar().
+
+- After the plot creation, it’s possible to remove the legend using the code p + theme(legend.position="none").
+
+- Add a thin black line around each of the bars by setting color="black" and specify size which is the thickness of the outline in millimetres.
+
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook)
+library(ggplot2)
+library(plotly)
+data(climate)
+
+csub<-subset(climate,Source=="Berkeley" & Year>=1900)
+csub$pos<-csub$Anomaly10y>=0
+
+g<-ggplot(csub,aes(x=Year,y=Anomaly10y,fill=pos))+geom_bar(stat="identity",position="identity",
+color="black",size=0.25)+scale_fill_manual(values=c("#CCEEFF","#FFDDDD"))+ggtitle("Barplot of Year and Anomaly10y")+theme(legend.position="none")
+ggplotly(g)
+
+```
+
+## Adjusting Bar Width and Spacing
+
+1. Set width in geom_bar(). The default value is 0.9. Larger values make the bars wider and smaller values make the bars narrower.
+
+2. The maximum width is 1.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+#Standard width
+library(gcookbook)
+library(ggplot2)
+library(plotly)
+library(gridExtra)
+data(pg_mean)
+
+g1<-ggplot(pg_mean,aes(x=group,y=weight,fill=group))+geom_bar(stat="identity")+xlab("Group")+
+  ylab("Weight")+ggtitle("Barplot of Group and Weight")
+ggplotly(g1)
+
+#For narrow bars
+g2<-ggplot(pg_mean,aes(x=group,y=weight,fill=group))+geom_bar(stat="identity",width=0.5)+xlab("Group")+ ylab("Weight")+ggtitle("Barplot of Group and Weight")
+ggplotly(g2)
+
+#For wider bars
+g3<-ggplot(pg_mean,aes(x=group,y=weight,fill=group))+geom_bar(stat="identity",width=1)+xlab("Group")+ ylab("Weight")+ggtitle("Barplot of Group and Weight")
+ggplotly(g3)
+
+grid.arrange(g1,g2,g3,ncol=3)
+
+```
+
+
+## Create Space in grouped bars and some space between the bars
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook)
+library(ggplot2)
+library(plotly)
+library(gridExtra)
+data(cabbage_exp)
+
+#space between grouped bars
+g1<-ggplot(cabbage_exp,aes(x=Date,y=Weight,fill=Cultivar))+geom_bar(stat="identity",width=0.5,
+position="dodge")+ggtitle("Barplot of Date and Weight")
+ggplotly(g1)
+
+#some space between the bars
+g2<-ggplot(cabbage_exp,aes(x=Date,y=Weight,fill=Cultivar))+geom_bar(stat="identity",width=0.5,
+position=position_dodge(0.7))+ggtitle("Barplot of Date and Weight")
+ggplotly(g2)
+
+#apply gridExtra package
+grid.arrange(g1,g2,ncol=2)
+
+```
+
+- position="dodge" has a default value of 0.9. If we want to set a specific value then we use position=position_dodge() for the bars.
+
+- The default width value for position _dodge() is the same as width in geom_bar().
+
+## Making a stacked bar graph plus the label in the middle of the stack
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook)
+library(ggplot2)
+library(plotly)
+data(cabbage_exp)
+
+g<-ggplot(cabbage_exp,aes(x=Date,y=Weight,fill=Cultivar))+geom_bar(stat="identity")+xlab("Date")+
+  ylab("Weight")+ggtitle("Stacked bar graph of Date and Weight")+geom_text(aes(label=Weight),
+                                      size=3,position=position_stack(vjust=0.5))
+ggplotly(g)
+
+```
+
+- Note that x is a categorical or factor variable and fill is also mapped onto another categorical or factor variable.
+
+## Reverse the order of the legend
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook)
+library(ggplot2)
+library(plotly)
+data(cabbage_exp)
+
+g<-ggplot(cabbage_exp,aes(x=Date,y=Weight,fill=Cultivar))+geom_bar(stat="identity")+
+guides(fill=guide_legend(reverse=TRUE))+ xlab("Date")+ylab("Weight")+ggtitle("Stacked bar graph of Date and Weight")
+ggplotly(g)
+
+```
+
+- The structure of the cabbage_exp data.
+
+1. There are three levels of Date.
+
+2. There are two levels of Cultivar.
+
+## To reverse the stacking order
+
+- Specify order = desc() in the aesthetic mapping.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook)
+library(ggplot2)
+library(plotly)
+library(plyr) # needed for desc()
+data(cabbage_exp)
+
+g<-ggplot(cabbage_exp,aes(x=Date,y=Weight,fill=Cultivar,order=desc(Cultivar)))+
+  geom_bar(stat="identity")+xlab("Date")+ylab("Weight")+ggtitle("Stacked bar graph of Date and Weight")
+ggplotly(g)
+
+```
+
+## For a more polished graph
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook)
+library(ggplot2)
+library(plotly)
+library(plyr) # needed for desc()
+data(cabbage_exp)
+
+g<-ggplot(cabbage_exp,aes(x=Date,y=Weight,fill=Cultivar))+geom_bar(stat="identity",color="black")+ guides(fill=guide_legend(reverse=TRUE))+scale_fill_brewer(palette="Pastel1")+xlab("Date")+ylab("Weight")+ggtitle("Stacked bar graph of Date and Weight")
+ggplotly(g)
+
+```
+
+## Making a proportional stacked bar graph (%age)
+
+- Scale the data to 100% within each stack.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook)
+library(ggplot2)
+library(plotly)
+library(plyr) # needed for desc()
+data(cabbage_exp)
+
+#Do a group wise transform splitting on "Date".
+
+ce<-ddply(cabbage_exp,"Date",transform,percent_weight=Weight/sum(Weight)*100)
+
+g<-ggplot(ce,aes(x=Date,y=percent_weight,fill=Cultivar))+geom_bar(stat="identity")
+ggplotly(g)
+
+```
+
+## Adding labels to a bar graph
+
+- Add geom_text to your graph and set vjust i.e. vertical justification which enables you to move the text above or below the tops of the bars.
+
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook)
+library(ggplot2)
+library(plotly)
+library(plyr) # needed for desc()
+library(gridExtra)
+data(cabbage_exp)
+
+#below the top
+g1<-ggplot(cabbage_exp,aes(x=interaction(Date,Cultivar),y=Weight))+geom_bar(stat="identity")+
+  geom_text(aes(label=Weight),vjust=1.5,color="white")
+
+#above the top
+g2<-ggplot(cabbage_exp,aes(x=interaction(Date,Cultivar),y=Weight))+geom_bar(stat="identity")+
+  geom_text(aes(label=Weight),vjust=-0.2) 
+
+grid.arrange(g1,g2,ncol=2)
+
+
+```
+
+- Consider your ylimt when you want to put the text on top of the bars. Y upper limit must be a bit higher.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook)
+library(ggplot2)
+library(plotly)
+library(plyr) # needed for desc()
+library(gridExtra)
+data(cabbage_exp)
+
+#Adjjust y limits to be a little higher
+g1<-ggplot(cabbage_exp,aes(x=interaction(Date,Cultivar),y=Weight))+geom_bar(stat="identity")+
+geom_text(aes(label=Weight),vjust=-0.2)+ylim(0,max(cabbage_exp$Weight)*1.05)
+
+#map y position slightly above the top of the bar
+g2<-ggplot(cabbage_exp,aes(x=interaction(Date,Cultivar),y=Weight))+geom_bar(stat="identity")+
+geom_text(aes(y=Weight+0.1,label=Weight))
+
+grid.arrange(g1,g2,ncol=2)
+
+```
+
+## For grouped bar graph
+
+- Use position =position_dodge() and give it a value for the dodging width- default is 0.9.
+
+- Specify size - default is 5.
+
+- make it smaller by using 3.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook)
+library(ggplot2)
+library(plotly)
+library(plyr) # needed for desc()
+library(gridExtra)
+data(cabbage_exp)
+
+ggplot(cabbage_exp,aes(x=Date,y=Weight,fill=Cultivar))+geom_bar(stat="identity",position="dodge")+
+  geom_text(aes(label=Weight),vjust=1.5,color="white",position=position_dodge(0.9),size=4)
+
+```
+
+## Putting labels on stacked bars
+
+- Find the cumulative sum for each stack.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook)
+library(ggplot2)
+library(plotly)
+library(plyr) # needed for desc()
+library(gridExtra)
+data(cabbage_exp)
+
+#sort the data
+ce<-arrange(cabbage_exp,Date,Cultivar)
+#get the cumulative sum
+ce<-ddply(ce,"Date",transform,label_y=cumsum(Weight))
+ce
+
+g1<-ggplot(ce,aes(x=Date,y=Weight,fill=Cultivar))+geom_bar(stat="identity")+geom_text(aes(y=label_y,
+    label=Weight),vjust=1.5,color="white")
+
+#placing the label in the middle of each stacked bar
+ce<-arrange(cabbage_exp,Date,Cultivar)
+
+#calculate y position placing it in the middle
+ce<-ddply(ce,"Date",transform,label_y=cumsum(Weight)-0.5*Weight)
+
+g2<-ggplot(ce,aes(x=Date,y=Weight,fill=Cultivar))+geom_bar(stat="identity")+
+  geom_text(aes(y=label_y,label=Weight),color="white")
+
+grid.arrange(g1,g2,ncol=2)
+
+```
+
+## For a more polished graph
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(gcookbook)
+library(ggplot2)
+library(plotly)
+library(plyr) # needed for desc()
+library(gridExtra)
+data(cabbage_exp)
+
+#placing the label in the middle of each stacked bar
+ce<-arrange(cabbage_exp,Date,Cultivar)
+
+#calculate y position placing it in the middle
+ce<-ddply(ce,"Date",transform,label_y=cumsum(Weight)-0.5*Weight)
+
+
+ggplot(ce,aes(x=Date,y=Weight,fill=Cultivar))+geom_bar(stat="identity",color="black")+
+  geom_text(aes(y=label_y,label=paste(format(Weight,nsmall=2),"kg")),size=4)+
+  guides(fill=guide_legend(reverse=TRUE))+scale_fill_brewer(palette="Pastel1")
+
+```
+
+## Add data label to simple bargraph
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE,comment=""}
+library(datasets)
+library(ggplot2)
+library(plotly)
+data(diamonds)
+
+
+g<-ggplot(diamonds,aes(x=cut,fill=cut))+ geom_bar()+xlab("Cut")+ylab("Count")+
+  ggtitle("Barplot showing count/frequency of cut ")+geom_text(stat="count",aes(label=..count..),
+  vjust=-0.2)
+ggplotly(g)
+
+```
